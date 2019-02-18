@@ -1,0 +1,162 @@
+类集---JDK1.2
+类集框架如何产生？
+动态数组，解决数组长度固定问题
+
+1.总体结构
+Collection接口----保持单个对象的最大父接口
+Collection的子接口：
+1)-List：运行存放相同对象
+     -ArrayList（扩容策略：扩1.5倍）
+      -Vector(扩容策略：扩2倍)
+      _LinkedList
+2)-Set:不允许对象重复
+      -TreeSet：有序存储
+       -HashSet：无序存储
+3)-Queue
+         -Deque
+
+2 List下的常用方法：
+.add()方法：添加元素
+remove（）方法：删除元素
+get()方法：获取元素
+set()方法：修改元素
+
+3.集合遍历集合：
+Iterator迭代器：共有，推荐使用
+ListIterator：List可以用
+Enumeration枚举：（Vector）
+for-each:
+
+
+4.；删除操作--fail-fast（快速失败策略），fail-safe
+-fail-fast（快速失败策略）
+ConcurrentModificationException：
+产生原因：在遍历集合过程中使用集合的修改方法导致的异常。有一个checkModCount（）方法会检查modCount和期望的expectedCount的值
+本质：int modCount
+哪些集合会产生这个错误：ArrayList，HashSet，HashMap
+作用：尽量保证并发情况下遍历集合一定返回正确的数据
+
+-fail-safe
+Map--保存一对对象的最大父接口
+集合：CopyOnWriteArrayList，ConcurrentHashMap等JUC下的线程安全集合
+
+
+5.常用子类接口：
+ArrayList
+
+Vector
+
+LinkedList
+
+
+
+对比三个子类
+1.线程安全性
+2.底层结构
+3.源码级别：扩容策略，初始化策略
+
+
+Map接口--保存一对对象的最大父接口
+1.整体结构：
+在HashMap下有一个子类：LinkedHashMap，有序Map，序指的是元素的添加顺序
+TreeMap有序Map，有序指的是Comparator或Compareable
+
+
+LinkedHashMap和TreeMap的区别
+
+
+hashMap下允许为空，但是不允许为空
+
+2.常用方法：
+put 
+get
+
+3.Map集合遍历
+
+
+Map->Set ?
+Set接口与Map接口的关系：
+Set接口是穿了马甲的Map接口，本质上Set接口的子类都是使用Map来存储元素的，都是讲元素存储到Map的key值而已，value都是
+
+方法：
+Set<Map.Entry><,>
+
+4.常见子类的解析：
+HashMap的源码：
+4.1成员变量：树化，数据结构
+
+DEFAULT_INITAL_CAPACITY（初始化容量--桶数量）：16
+DEFAULT_LOAD_FACTORY（负载因子）   ：0.75f
+TREELFY_THERSHOLD（树化阈值）：8
+MIN_TREEIFY_CAPACITY（树化最少元素个数）：64
+UNTREELFY_THERSHOLD（解除树化，返回链表的阈值）：6
+modCount：快速失败策略（）
+Node<K,V>[] table : 真正存储元素的哈希表
+
+
+树化逻辑：
+当一个桶中链表元素大于等于8，并且哈希表中的所有元素个数加起来超过64，此时会将此桶桶中的链表结构转化为红黑树结构（提高链表过长导致查找太慢问题，从原来的O(n)优化到O(logn),最终目的是减少哈希碰撞）
+）
+
+若只是链表个数大于8，而哈希表元素不超过64，此时只是简单地resize(桶扩容)，并不会树化
+
+
+4.2构造函数
+HashMap同样采用懒加载策略（并不会在对象产生时初始化哈希表）
+无参构造：
+//初始化负载因子
+this.loadFactor  = DEFAULT_LOAD_FACTOR
+
+
+
+4.3put与get流程
+
+put方法：
+1.若HashMap还未初始化，先进行哈希表的初始化操作（默认初始化为16个桶）
+2.对传入的key值做hash，的出要存放该元素的桶编号，
+	1. 
+ 若没有发生碰撞，即头结点为空，将该节点直接存放到桶中作为头结点
+	2. 
+若发生碰撞
+
+
+           1.此桶中的链表已经树化，将节点构造为树节点加入红黑树
+            2.链表还未树化，将节点作为链表的最后一个节点加入链表
+	1. 
+若哈希表中存在key值相同的元素，替换为最新的value值
+	2. 
+若桶满了（判断rize++是否大于threshold） ，调用resize()扩容哈希表
+
+
+        threshold=容量（默认16）*负载因子（默认0.75）
+
+4.4哈希算法，扩容，性能
+
+HAshMapZ中的Hash算法
+>>>:无符号右移
+>>：带符号右移
+static 
+
+
+1.为何不采用Object类提供的hashCode方法计算出key值作为桶下标
+基本不会发生碰撞，意义不大。哈希表就和普通数组基本没有区别
+
+2.为何高16位>>>16?
+为何取出key值得高16位右移参与hash运算？
+因为hash基本在高16位进行hash运算（保证了高低位共同进行运算）
+
+3.为何HashMap中容量均为2^n?
+（n-1）& hash：当n为2^n，此时位运算就相当于hash%（n-1）
+
+
+
+
+
+
+
+
+
+
+
+
+
