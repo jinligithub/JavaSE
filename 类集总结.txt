@@ -151,6 +151,52 @@ static
 
 
 
+4.扩容resize()
+4.1负责哈希表的初始化操作
+
+4.2当表中元素个数达到阈值：容量*负载因子后进行扩容为原来哈希表的二倍（扩容的是桶的个数）
+
+4.3扩容后，原来元素进行rehash：原来的元素要么还呆在原桶中，要么变为原来桶的二倍桶中。
+
+5.性能问题
+5.1多线程下
+在竞争激烈的处境下，使用HashMap会 造成CPU飙到100%
+解决：使用ConcurrentHashMap代替HashMap
+
+5.2性能的主要开销：resize()后的rehash过程
+解决：在能预估存放元素个数的前提条件在传入适当的参数化来尽量避免resize.
+
+补充：
+在resize过程中发现桶下的红黑树节点<=UNTREELFY_THERSHOLD，会将红黑树解除树化还原为链表
+
+
+HashTable    JDK1.0  线程安全集合   ----单纯呢的哈希表实现
+不允许k,v  为空
+线程安全的实现：
+在put , get  ,remove等方法上使用方法级的内建锁，锁的是当前HashTable对象，即整个哈希表（效率低）
+
+如何优化：
+JDK8之前的ConcurrentHashMap思路：通过锁细力度化，将整个表的锁拆分为多个锁进行优化
+实现思路：
+JDK7的ConcurrentHashMap：哈希表
+将原先的16个桶设计，改为16个Segment，没给Segment都有独立的一把锁，拆分后的Segment都想当由于原先的一个HashMap（double-hash设计），并且Segment在初始化后无法扩容，每个Segment对应的哈希表可以扩容，扩容只扩容对应Segment下面的哈希表（每个Segment相对独立）。
+
+线程安全：使用ReentrantLock保证协议Segment下的线程安全
+
+JDK8下的ConCurrentHashMap：
+整体结构 与HashMap别无二致，都是使用哈希表+红黑树结构
+线程安全：使用内建锁synchronized+CAS锁每个桶的头结点 使得锁进一笔细粒度化
+
+ConcurrentHashMap不允许键值对为空
+
+JDK7与JDK8 ConcurrentHashMap的变化：
+1.结构上的变化：取消原先的Segment设计，取而代之的是使用HashMap同样的数据结构 ，即哈希表+红黑树，并且引入懒加载机制
+2.线程安全上：
+2.1锁粒度更细，由原来的一片区域到锁桶的头结点
+2.2由原先的ReentrantLock替换为synchronized+CAS：现版本的synchronized已经经过不断优化，性能上与ReentrantLock基本无区别，并且向对于ReentrantLock，使用Synchronized可以节省大量空间（原来ReentrantLock下的所有节点都要加入同步队列进行AQS，浪费空间），这是非常大的优势所在。
+
+
+
 
 
 
