@@ -1,0 +1,63 @@
+public V  put (K  key, V  value){
+         return  putVal(hash(key),   key  ,  value,   onlyIfAbsent   false,   evict   true)
+
+hash(key): 求得的哈希码
+ key  ：
+value  ： 
+onlyIfAbsent   ：如果他为真不允许他更改
+ evict   ：如果他为false，表就是默认的初始化状态
+
+
+final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
+                   boolean evict) {
+        Node<K,V>[] tab; Node<K,V> p; int n, i;
+        // 当前哈希表还未初始化
+        if ((tab = table) == null || (n = tab.length) == 0)
+            // resize()完成哈希表的初始化操作
+            n = (tab = resize()).length;
+        // 根据key值hash后的得到桶下标，并且此时的桶中元素个数为空
+        if ((p = tab[i = (n - 1) & hash]) == null)
+            // 将要保存的节点放置在此桶的第一个元素
+            tab[i] = newNode(hash, key, value, null);
+        else {
+            Node<K,V> e; K k;
+            // 节点处于同一个桶中头结点并且key值完全一样，替换头结点
+            if (p.hash == hash &&
+                ((k = p.key) == key || (key != null && key.equals(k))))
+                e = p;
+            // hash(key)桶中元素不为空，判断此桶是否已经树化
+            else if (p instanceof TreeNode)
+                // 调用树化后的方法将新节点添加到红黑树中
+                e = ((TreeNode<K,V>)p).putTreeVal(this, tab, hash, key, value);
+            // 桶中元素不为空并且还是链表
+            else {
+                for (int binCount = 0; ; ++binCount) {
+                    if ((e = p.next) == null) {
+                        // 将新节点链到链表尾部
+                        p.next = newNode(hash, key, value, null);
+                        if (binCount >= TREEIFY_THRESHOLD - 1) // -1 for 1st
+                            treeifyBin(tab, hash);
+                        break;
+                    }
+                    if (e.hash == hash &&
+                        ((k = e.key) == key || (key != null && key.equals(k))))
+                        break;
+                    p = e;
+                }
+            }
+            if (e != null) { // existing mapping for key
+                V oldValue = e.value;
+                if (!onlyIfAbsent || oldValue == null)
+                    e.value = value;
+                afterNodeAccess(e);
+                return oldValue;
+            }
+        }
+        ++modCount;
+        // 判断添加元素之后整个的哈希表大小是否超过threshold
+        if (++size > threshold)
+            // 若超过，调用resize()方法扩容
+            resize();//扩容哈希表的桶的个数
+        afterNodeInsertion(evict);
+        return null;
+    }
